@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.5)
 enable_testing()
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 project(SloppyDB)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(TBB_ROOT "${CMAKE_HOME_DIRECTORY}/lib/tbb")

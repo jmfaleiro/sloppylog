@@ -8,19 +8,19 @@ LockManager::~LockManager()
 {
 }
 
-void LockManager::Lock(string key, LockRequest *rq)
+void LockManager::Lock(DBKey key, shared_ptr<LockRequest> rq)
 {
   assert(rq->acquired == false && 
          (rq->mode == READ || rq->mode == WRITE));
 
-  tbb::concurrent_hash_map<string, list<LockRequest*>>::accessor ac;
+  LockHashTable::accessor ac;
 
   _lock_table.insert(ac, key);
   ac->second.push_front(rq);
   rq->cursor = ac->second.begin();
   rq->rev_cursor = ac->second.rbegin();
 
-  list<LockRequest*>::const_iterator it = rq->cursor;
+  list<shared_ptr<LockRequest>>::const_iterator it = rq->cursor;
   assert(*it == rq);
   ++it;
 
@@ -37,12 +37,12 @@ void LockManager::Lock(string key, LockRequest *rq)
   }
 }
 
-void LockManager::Unlock(string key, LockRequest *rq)
+void LockManager::Unlock(DBKey key, shared_ptr<LockRequest> rq)
 {
   assert(rq->acquired == true);
   assert(rq->mode == READ || rq->mode == WRITE);
 
-  tbb::concurrent_hash_map<string, list<LockRequest*>>::accessor ac;
+  LockHashTable::accessor ac;
 
   _lock_table.insert(ac, key);
   auto it_fwd = rq->cursor;

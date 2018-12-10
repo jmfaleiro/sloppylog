@@ -17,21 +17,19 @@ struct RecordMetadata {
 
 class Record {
 
-private:
-  shared_ptr<RecordMetadata>    _meta_data;
-  shared_ptr<size_t>            _field_offsets;
-  shared_ptr<char>              _data;
+protected:
+  RecordMetadata                _meta_data;
+  size_t                        *_field_offsets;
+  char                          *_data;
 
 public:
-  
-  /* Used for checkpointing. */
-  virtual char* Serialize() = 0;
-  virtual void Deserialize(char *data) = 0;
 };
 
 class Table {
 public:
-  virtual shared_ptr<Record> get_ref(DBKey key) = 0;
+  virtual shared_ptr<Record>      get_ref(DBKey key) = 0;
+  virtual bool                    insert(DBKey key, shared_ptr<Record> record) = 0; 
+  virtual bool                    remove(DBKey key) = 0;
 };
 
 class Transaction {

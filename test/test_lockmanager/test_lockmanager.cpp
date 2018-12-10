@@ -27,6 +27,7 @@ TEST_F(LockManagerTest, WriteWriteTest)
   auto rq2 = std::make_shared<LockRequest>();
 
   rq->mode = WRITE;
+  rq2->mode = WRITE;
 
   DBKey key = { "tbl", "test" };
 

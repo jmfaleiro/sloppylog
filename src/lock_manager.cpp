@@ -10,7 +10,7 @@ LockManager::~LockManager()
 
 void LockManager::Lock(DBKey key, shared_ptr<LockRequest> rq)
 {
-  assert(rq->acquired == false && 
+  assert(rq->acquired.load() == false && 
          (rq->mode == READ || rq->mode == WRITE));
 
   LockHashTable::accessor ac;

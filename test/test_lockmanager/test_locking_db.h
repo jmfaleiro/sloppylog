@@ -14,16 +14,24 @@ public:
 };
 
 class LockingDatabaseTest : public ::testing::Test {
-
 protected:
-  
-  LockingDatabaseTest();
-  ~LockingDatabaseTest();
-
-  virtual void SetUp();
-
-  virtual void TearDown();
-
   unique_ptr<LockingDatabase>       _lck_db; 
   int                               _num_records;
+
+//  void thread_tx(shared_ptr<Transaction> tx, shared_ptr<vector<int>> writeset);
+
+
+  LockingDatabaseTest();
+  ~LockingDatabaseTest();
+  void SetUp();
+  void TearDown();
+
+public:
+/*
+  void thread_fn(atomic<int> &tx_counter, 
+                 int num_txs, 
+                 vector<shared_ptr<Transaction>> &txs,
+                 shared_ptr<vector<int>> writeset[]);
+                 */
+
 };

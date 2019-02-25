@@ -34,11 +34,15 @@ public:
 
 class Transaction {
 protected:
-  unordered_map<string, unique_ptr<LogRecord>>     _write_log;  
-  unordered_set<shared_ptr<Transaction>>           _commit_deps;
+  unordered_map<string, unique_ptr<LogRecord>>     _write_log;
 
 public:
   virtual ~Transaction() {}
+  unordered_set<shared_ptr<Transaction>>           _commit_deps;
+
+  Transaction() {
+//    _write_log = unordered
+  }
 };
 
 class Database {

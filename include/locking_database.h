@@ -29,5 +29,6 @@ public:
 
   shared_ptr<Transaction>       start_transaction(); 
   bool                          commit_transaction(shared_ptr<Transaction> tx);
+  void                          extract_deps(DBKey key);
 };
 

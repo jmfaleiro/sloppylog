@@ -1,4 +1,5 @@
 #include <locking_database.h>
+#include <lock_manager.h>
 
 using namespace std;
 
@@ -24,6 +25,8 @@ LockingDatabase::get_ref(DBKey key, LockMode mode,
   lock_rq->mode = mode;
   
   _lck_mngr->Lock(key, lock_rq);
+  // TODO: right placement?
+  extract_deps(key);
 
   /* XXX Not sure if we need to support upgrading locks. */
   assert(tx->_locks.find(key) == tx->_locks.end());
@@ -51,6 +54,31 @@ shared_ptr<Transaction> LockingDatabase::start_transaction()
 {
   auto lck_tx = shared_ptr<LockingTransaction>(new LockingTransaction());
   return static_pointer_cast<Transaction>(lck_tx);
+}
+
+/* Extracts W-W and W-R dependencies */
+void LockingDatabase::extract_deps(DBKey key)
+{
+  LockManager::LockHashTable::accessor ac;
+  _lck_mngr->_lock_table.insert(ac, key);
+  auto fwd = ac->second.begin();
+  auto it = fwd;
+  fwd++;
+
+  while (fwd != ac->second.end()) {
+    if ((*fwd)->mode == WRITE) {
+      while (it != fwd) {
+        auto write_tx = (Transaction *) (*fwd).get()->tx;
+        auto write_tx_shared = std::make_shared<Transaction>();
+        write_tx_shared->_commit_deps = write_tx->_commit_deps;
+        auto other_tx = (Transaction *) (*it).get()->tx;
+        other_tx->_commit_deps.insert(write_tx_shared);
+        it++;
+      }
+      break;
+    }
+    fwd++;
+  }
 }
 
 /* Release all locks and commit. */

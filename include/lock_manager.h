@@ -57,13 +57,12 @@ struct hash<DBKey>
 class LockManager {
 
 private:
-  typedef tbb::concurrent_hash_map<DBKey, list<shared_ptr<LockRequest>>, DBKey> LockHashTable;
-  LockHashTable   _lock_table;  
 
 public:
   LockManager(); 
   ~LockManager();
-
+  typedef tbb::concurrent_hash_map<DBKey, list<shared_ptr<LockRequest>>, DBKey> LockHashTable;
+  LockHashTable _lock_table;
   void Lock(DBKey key, shared_ptr<LockRequest> rq);
   void Unlock(DBKey key, shared_ptr<LockRequest> rq);
   void Reset();

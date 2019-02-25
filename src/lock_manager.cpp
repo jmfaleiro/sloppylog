@@ -14,7 +14,7 @@ void LockManager::Lock(DBKey key, shared_ptr<LockRequest> rq)
          (rq->mode == READ || rq->mode == WRITE));
 
   LockHashTable::accessor ac;
-
+//  printf("%i\n", rq->mode);
   _lock_table.insert(ac, key);
   ac->second.push_front(rq);
   rq->cursor = ac->second.begin();

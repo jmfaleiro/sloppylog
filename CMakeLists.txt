@@ -32,3 +32,6 @@ include_directories(include)
 target_link_libraries(libsloppydb ${TBB_IMPORTED_TARGETS})
 target_link_libraries(sloppydb libsloppydb)
 
+# Try to make lldb work
+set(CMAKE_BUILD_TYPE Debug)
+

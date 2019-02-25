@@ -1,5 +1,6 @@
 #pragma once
 
+#include <database.h>
 #include <lock_manager.h>
 #include <gtest/gtest.h>
 

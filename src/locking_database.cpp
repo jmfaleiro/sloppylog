@@ -1,5 +1,6 @@
 #include <locking_database.h>
 #include <lock_manager.h>
+#include <unistd.h>
 
 using namespace std;
 
@@ -23,10 +24,9 @@ LockingDatabase::get_ref(DBKey key, LockMode mode,
   assert(mode == READ || mode == WRITE);
   auto lock_rq = shared_ptr<LockRequest>(new LockRequest());
   lock_rq->mode = mode;
+  lock_rq->tx = tx;
   
   _lck_mngr->Lock(key, lock_rq);
-  // TODO: right placement?
-  extract_deps(key);
 
   /* XXX Not sure if we need to support upgrading locks. */
   assert(tx->_locks.find(key) == tx->_locks.end());
@@ -56,38 +56,52 @@ shared_ptr<Transaction> LockingDatabase::start_transaction()
   return static_pointer_cast<Transaction>(lck_tx);
 }
 
-/* Extracts W-W and W-R dependencies */
-void LockingDatabase::extract_deps(DBKey key)
+void LockingDatabase::disk_commit()
 {
-  LockManager::LockHashTable::accessor ac;
-  _lck_mngr->_lock_table.insert(ac, key);
-  auto fwd = ac->second.begin();
-  auto it = fwd;
-  fwd++;
-
-  while (fwd != ac->second.end()) {
-    if ((*fwd)->mode == WRITE) {
-      while (it != fwd) {
-        auto write_tx = (Transaction *) (*fwd).get()->tx;
-        auto write_tx_shared = std::make_shared<Transaction>();
-        write_tx_shared->_commit_deps = write_tx->_commit_deps;
-        auto other_tx = (Transaction *) (*it).get()->tx;
-        other_tx->_commit_deps.insert(write_tx_shared);
-        it++;
-      }
-      break;
-    }
-    fwd++;
-  }
+  sleep(1);
 }
 
-/* Release all locks and commit. */
-bool LockingDatabase::commit_transaction(shared_ptr<Transaction> tx)
+void LockingDatabase::wait_until_committed(shared_ptr<Transaction> tx)
+{
+  while (tx->status != COMMITTED)
+    ;
+}
+
+void LockingDatabase::release_locks(shared_ptr<Transaction> tx)
 {
   auto lock_tx = std::dynamic_pointer_cast<LockingTransaction>(tx);
   for (auto it = lock_tx->_locks.begin(); it != lock_tx->_locks.end(); ++it) {
-    _lck_mngr->Unlock(it->first, it->second); 
-  } 
+    _lck_mngr->Unlock(it->first, it->second);
+  }
+}
 
+/* Sleep to ensure dependencies are committed naively. */
+bool LockingDatabase::commit_transaction(shared_ptr<Transaction> tx)
+{
+  disk_commit();
+  release_locks(tx);
+  tx->status = COMMITTED;
   return true;
 }
+
+/* Check that dependencies are committed explicitly. */
+bool LockingDatabase::commit_transaction_deps(shared_ptr<Transaction> tx)
+{
+  release_locks(tx);
+  auto deps = tx->_commit_deps;
+  for (auto it = deps.begin(); it != deps.end(); ) {
+    if ((*it)->status == COMMITTED) {
+      it = deps.erase(it);
+    }
+    else {
+      wait_until_committed(*it);
+      ++it;
+    }
+  }
+  // Assume that no dependencies aborted
+  disk_commit();
+  tx->status = COMMITTED;
+  return true;
+}
+
+

@@ -3,9 +3,41 @@
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
-#include <lock_manager.h>
+#include <string>
 
 using namespace std;
+
+struct DBKey {
+  string      table;
+  string      record;
+
+  bool operator==(const DBKey &other) const
+  {
+    return this->table == other.table && this->record == other.record;
+  }
+
+  static size_t hash(const DBKey& k)
+  {
+    auto table_hash = std::hash<string>{}(k.table);
+    auto record_hash = std::hash<string>{}(k.record);
+    return (table_hash << 1) ^ record_hash;
+  }
+
+  static bool equal(const DBKey& k1, const DBKey& k2)
+  {
+    return k1.table == k2.table && k1.record == k2.record;
+  }
+};
+
+template<>
+struct hash<DBKey>
+{
+  std::size_t operator()(const DBKey &k) const
+  {
+    return DBKey::hash(k);
+  }
+};
+
 
 class LogRecord {
 };
@@ -25,6 +57,11 @@ protected:
 public:
 };
 
+typedef enum {
+  OTHER = 0,
+  COMMITTED = 1
+} Status;
+
 class Table {
 public:
   virtual shared_ptr<Record>      get_ref(DBKey key) = 0;
@@ -39,10 +76,8 @@ protected:
 public:
   virtual ~Transaction() {}
   unordered_set<shared_ptr<Transaction>>           _commit_deps;
+  Status                                          status;
 
-  Transaction() {
-//    _write_log = unordered
-  }
 };
 
 class Database {

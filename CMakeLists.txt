@@ -35,3 +35,6 @@ target_link_libraries(sloppydb libsloppydb)
 # Try to make lldb work
 set(CMAKE_BUILD_TYPE Debug)
 
+# Try to fix warning
+cmake_policy(SET CMP0054 OLD)
+

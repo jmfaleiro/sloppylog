@@ -27,8 +27,12 @@ public:
   virtual shared_ptr<Record>    read_ref(DBKey key, shared_ptr<Transaction> tx);
   virtual shared_ptr<Record>    write_ref(DBKey key, shared_ptr<Transaction> tx);
 
-  shared_ptr<Transaction>       start_transaction(); 
+  shared_ptr<Transaction>       start_transaction();
+  void                          disk_commit();
+  void                          wait_until_committed(shared_ptr<Transaction> tx);
+  void                          release_locks(shared_ptr<Transaction> tx);
   bool                          commit_transaction(shared_ptr<Transaction> tx);
-  void                          extract_deps(DBKey key);
+  bool                          commit_transaction_deps(shared_ptr<Transaction> tx);
+  bool                          abort_transaction(shared_ptr<Transaction> tx);
 };
 

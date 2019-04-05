@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <thread>
 #include <set>
+#include <unordered_set>
 
 LockManagerTest::LockManagerTest()
 {
@@ -23,56 +24,57 @@ void LockManagerTest::TearDown()
 
 TEST_F(LockManagerTest, CommitDepsTest)
 {
-    /* R1 writes, R2 and R3 perform dirty read and write, respectively. */
-    auto rq1 = std::make_shared<LockRequest>();
-    auto rq2 = std::make_shared<LockRequest>();
-    auto rq3 = std::make_shared<LockRequest>();
+/* R1 writes, R2 and R3 perform dirty read and write, respectively. */
+auto rq1 = std::make_shared<LockRequest>();
+auto rq2 = std::make_shared<LockRequest>();
+auto rq3 = std::make_shared<LockRequest>();
 
-    rq1->mode = WRITE;
-    rq2->mode = READ;
-    rq3->mode = WRITE;
+rq1->mode = WRITE;
+rq2->mode = READ;
+rq3->mode = WRITE;
 
-    DBKey key = { "tbl", "test" };
+auto t1 = std::make_shared<Transaction>();
+auto t2 = std::make_shared<Transaction>();
+auto t3 = std::make_shared<Transaction>();
 
-    _lck_mngr.Lock(key, rq1);
-    ASSERT_EQ(rq1->acquired.load(), true);
+rq1->tx = t1;
+rq2->tx = t2;
+rq3->tx = t3;
 
-    _lck_mngr.Lock(key, rq2);
-    ASSERT_EQ(rq2->acquired.load(), false);
+DBKey key = { "tbl", "test" };
 
-    _lck_mngr.Lock(key, rq3);
-    ASSERT_EQ(rq3->acquired.load(), false);
+_lck_mngr.Lock(key, rq1);
+ASSERT_EQ(rq1->acquired.load(), true);
 
-    _lck_mngr.Unlock(key, rq1);
-    ASSERT_EQ(rq1->acquired.load(), false);
-    ASSERT_EQ(rq2->acquired.load(), true);
-    ASSERT_EQ(rq3->acquired.load(), false);
+_lck_mngr.Lock(key, rq2);
+ASSERT_EQ(rq2->acquired.load(), false);
 
-    _lck_mngr.Unlock(key, rq2);
-    ASSERT_EQ(rq1->acquired.load(), false);
-    ASSERT_EQ(rq2->acquired.load(), false);
-    ASSERT_EQ(rq3->acquired.load(), true);
+_lck_mngr.Lock(key, rq3);
+ASSERT_EQ(rq3->acquired.load(), false);
 
-    /* TODO: check that rq->tx->_commit_deps is correct */
-//    auto rq1_tx = (Transaction *) rq1.get()->tx;
-//    auto rq2_tx = (Transaction *) rq2.get()->tx;
-//    auto rq3_tx = (Transaction *) rq3.get()->tx;
-//    auto commit_deps_1 = rq1_tx->_commit_deps;
-//    auto commit_deps_2 = rq2_tx->_commit_deps;
-//    auto commit_deps_3 = rq3_tx->_commit_deps;
-//    ASSERT_EQ(commit_deps_1.size(), 0);
-//    ASSERT_EQ(commit_deps_2, commit_deps_3);
-//    auto it2 = commit_deps_2.begin();
-//    auto tx2 = (*it2).get();
-//    ASSERT_EQ(tx2, rq2.get()->tx);
+_lck_mngr.Unlock(key, rq1);
+ASSERT_EQ(rq1->acquired.load(), false);
+ASSERT_EQ(rq2->acquired.load(), true);
+ASSERT_EQ(rq3->acquired.load(), false);
 
+_lck_mngr.Unlock(key, rq2);
+ASSERT_EQ(rq1->acquired.load(), false);
+ASSERT_EQ(rq2->acquired.load(), false);
+ASSERT_EQ(rq3->acquired.load(), true);
 
-//    auto it1 = commit_deps_1.begin();
-//    auto tx1 = (*it1).get();
-//    ASSERT_EQ(tx1, )
-//    auto commit_deps = rq2_tx->_commit_deps;
-//    auto it = commit_deps.begin();
-//    auto tx = *it;
+_lck_mngr.Unlock(key, rq3);
+
+auto rq1_tx = rq1->tx;
+auto rq2_tx = rq2->tx;
+auto rq3_tx = rq3->tx;
+auto commit_deps_1 = rq1_tx->_commit_deps;
+auto commit_deps_2 = rq2_tx->_commit_deps;
+auto commit_deps_3 = rq3_tx->_commit_deps;
+ASSERT_EQ(commit_deps_1.size(), 0);
+ASSERT_EQ(commit_deps_2, commit_deps_3);
+auto it2 = commit_deps_2.begin();
+auto tx2 = *it2;
+ASSERT_EQ(tx2, t1); // both depend on TX1
 
 }
 

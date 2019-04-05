@@ -14,7 +14,6 @@ void LockManager::Lock(DBKey key, shared_ptr<LockRequest> rq)
          (rq->mode == READ || rq->mode == WRITE));
 
   LockHashTable::accessor ac;
-//  printf("%i\n", rq->mode);
   _lock_table.insert(ac, key);
   ac->second.push_front(rq);
   rq->cursor = ac->second.begin();
@@ -34,6 +33,27 @@ void LockManager::Lock(DBKey key, shared_ptr<LockRequest> rq)
     } 
   } else { 
     rq->acquired = (it == ac->second.end());
+  }
+  extract_deps(key, ac->second);
+}
+
+/* Extracts W-W and W-R dependencies */
+void LockManager::extract_deps(DBKey key, list<shared_ptr<LockRequest>> sec)
+{
+  auto fwd = sec.begin();
+  auto it = fwd;
+  fwd++;
+
+  assert ((*it)->tx->_commit_deps.size() == 0);
+
+  while (fwd != sec.end()) {
+    if ((*fwd)->mode == WRITE) {
+      auto write_tx = (*fwd)->tx;
+      auto curr_tx = (*it)->tx;
+      curr_tx->_commit_deps.insert(write_tx);
+      break;
+    }
+    fwd++;
   }
 }
 

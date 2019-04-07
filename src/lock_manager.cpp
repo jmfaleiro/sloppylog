@@ -44,8 +44,6 @@ void LockManager::extract_deps(DBKey key, list<shared_ptr<LockRequest>> sec)
   auto it = fwd;
   fwd++;
 
-  assert ((*it)->tx->_commit_deps.size() == 0);
-
   while (fwd != sec.end()) {
     if ((*fwd)->mode == WRITE) {
       auto write_tx = (*fwd)->tx;

@@ -38,7 +38,7 @@ void LockingDatabaseTest::SetUp()
 void LockingDatabaseTest::TearDown()
 {
 }
-
+/*
 TEST_F(LockingDatabaseTest, SimpleTest)
 {
   DBKey key = { "test", "0" };
@@ -67,7 +67,7 @@ TEST_F(LockingDatabaseTest, SimpleTest)
   }
   _lck_db->commit_transaction_deps(tx);
 }
-
+*/
 static void thread_tx(Database *db, shared_ptr<Transaction> tx, shared_ptr<vector<int>> writeset)
 {
   auto num_keys = writeset->size();
@@ -94,7 +94,7 @@ static void thread_fn(atomic<int> *tx_counter,
     thread_tx(db, (*txs)[index], (*writeset)[index]);
   }
 }
-
+/*
 TEST_F(LockingDatabaseTest, TxTest)
 {
   uint64_t expected_vals[_num_records];
@@ -152,3 +152,4 @@ TEST_F(LockingDatabaseTest, TxTest)
   }
   _lck_db->commit_transaction(check_tx);
 }
+*/

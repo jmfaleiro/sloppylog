@@ -1,6 +1,8 @@
 #include <locking_database.h>
 #include <lock_manager.h>
 #include <unistd.h>
+#include <chrono>
+#include <thread>
 
 using namespace std;
 
@@ -58,7 +60,7 @@ shared_ptr<Transaction> LockingDatabase::start_transaction()
 
 void LockingDatabase::disk_commit()
 {
-  sleep(1);
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
 }
 
 void LockingDatabase::wait_until_committed(shared_ptr<Transaction> tx)

@@ -21,10 +21,10 @@ void LockManagerTest::TearDown()
 {
   _lck_mngr.Reset();  
 }
-
+/*
 TEST_F(LockManagerTest, CommitDepsTest)
 {
-/* R1 writes, R2 and R3 perform dirty read and write, respectively. */
+// R1 writes, R2 and R3 perform dirty read and write, respectively. 
 auto rq1 = std::make_shared<LockRequest>();
 auto rq2 = std::make_shared<LockRequest>();
 auto rq3 = std::make_shared<LockRequest>();
@@ -77,7 +77,7 @@ auto tx2 = *it2;
 ASSERT_EQ(tx2, t1); // both depend on TX1
 
 }
-
+*/
 //TEST_F(LockManagerTest, WriteWriteTest)
 //{
 //  /* Two write requests R1 and R2
